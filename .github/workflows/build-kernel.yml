@@ -184,11 +184,11 @@ jobs:
 
       - name: Fix DTS Includes
         run: |
-          cd $WORKSPACE/android-kernel
+          cd "${WORKSPACE}/android-kernel"
           VADC_PATH=$(find . -name "qcom,spmi-vadc.h" | head -n 1)
-          if [ -n "$VADC_PATH" ]; then
-            echo "[+] Found header at $VADC_PATH, flattening into dtsi..."
-            sed -i "/#include <dt-bindings\/iio\/qcom,spmi-vadc.h>/r $VADC_PATH" arch/arm64/boot/dts/18821/pm8150.dtsi
+          if [ -n "${VADC_PATH}" ]; then
+            echo "[+] Found header at ${VADC_PATH}, flattening into dtsi..."
+            sed -i "/#include <dt-bindings\/iio\/qcom,spmi-vadc.h>/r ${VADC_PATH}" arch/arm64/boot/dts/18821/pm8150.dtsi
             sed -i "/#include <dt-bindings\/iio\/qcom,spmi-vadc.h>/d" arch/arm64/boot/dts/18821/pm8150.dtsi
           else
             echo "[x] Warning: qcom,spmi-vadc.h not found!"
