@@ -188,14 +188,16 @@ jobs:
           VADC_PATH=$(find . -name "qcom,spmi-vadc.h" | head -n 1)
           if [ -n "${VADC_PATH}" ]; then
             echo "[+] Found header at ${VADC_PATH}, flattening into dtsi..."
-            # 1. 把头文件平铺注入，解决第 21 行报错
-            sed -i "/#include <dt-bindings\/iio\/qcom,spmi-vadc.h>/r ${VADC_PATH}" arch/arm64/boot/dts/18821/pm8150.dtsi
+            
+            # 1. 规避多行缩进问题，用单行 printf 安全创建包含新宏和旧头文件的临时文件
+            printf '#define ADC_XO_THERM_PU2 0x4c\n#define ADC_AMUX_THM1_PU2 0x4d\n#define ADC_AMUX_THM2_PU2 0x4e\n' > /tmp/missing_macros.h
+            cat "${VADC_PATH}" >> /tmp/missing_macros.h
+            
+            # 2. 将新宏整体精准塞入原 #include 所在的有效代码行位置
+            sed -i "/#include <dt-bindings\/iio\/qcom,spmi-vadc.h>/r /tmp/missing_macros.h" arch/arm64/boot/dts/18821/pm8150.dtsi
             sed -i "/#include <dt-bindings\/iio\/qcom,spmi-vadc.h>/d" arch/arm64/boot/dts/18821/pm8150.dtsi
             
-            # 2. 补全缺失的 _PU2 宏定义，解决第 271 行报错
-            # 在文件开头强行注入定义，映射到已有宏上
-            sed -i '1s/^/#define ADC_XO_THERM_PU2 0x4c\n#define ADC_AMUX_THM1_PU2 0x4d\n#define ADC_AMUX_THM2_PU2 0x4e\n/' arch/arm64/boot/dts/18821/pm8150.dtsi
-            echo "[+] Successfully fixed missing _PU2 macros."
+            echo "[+] Successfully fixed missing _PU2 macros at the correct position."
           else
             echo "[x] Warning: qcom,spmi-vadc.h not found!"
           fi
